@@ -623,7 +623,7 @@
         let targetStartDate = null;
         let targetEndDate = null;
         
-        // ⭐ 1. URLパラメータとLocalStrageから設定を読み込む
+        // URLパラメータとLocalStrageから設定を読み込む
         function loadSettings() {
             const params = new URLSearchParams(window.location.search);
             
@@ -649,7 +649,7 @@
             document.getElementById('weekStartDay').value = weekStartDay.toString();
         }
         
-        // ⭐ 2. LocalStorageに設定を保存し、URLを更新する
+        // LocalStorageに設定を保存し、URLを更新する
         function saveSettings(updateUrl = true) {
             // LocalStorage保存
             localStorage.setItem('lang', currentLang);
@@ -667,7 +667,6 @@
         function updateLanguage() {
             const t = translations[currentLang];
             document.getElementById('title').textContent = t.title;
-            // Titles are now updated dynamically in updateTimeProgress
             document.getElementById('targetTitle').textContent = t.target;
             document.getElementById('yearDayLabel').textContent = t.dayOfYear;
             document.getElementById('weekNumberLabel').textContent = t.weekOfYear;
@@ -686,23 +685,33 @@
             // Update HTML lang attribute for SEO/Accessibility
             document.documentElement.lang = currentLang;
         }
-        
-        function getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        }
-        
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
-        }
-        
+
+        // 年間の経過日数を取得
         function getDayOfYear(date) {
             const start = new Date(date.getFullYear(), 0, 0);
             const diff = date - start;
             return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+        
+        // ⭐ 修正4: 週開始曜日に合わせたカスタム週番号を計算 (非ISO)
+        function getCustomWeekNumber(date, weekStart) {
+            const startOfYear = new Date(date.getFullYear(), 0, 1);
+            const dayOfYear = getDayOfYear(date);
+
+            // Jan 1st の曜日を取得 (0=Sun, 1=Mon, ...)
+            const jan1DayOfWeek = startOfYear.getDay();
+
+            // Jan 1st が属する週の、週の開始日(weekStart)から数えたオフセット
+            // 例: weekStart=1(月), Jan1=日(0) の場合: (0 - 1 + 7) % 7 = 6日
+            // Jan 1st はその週の7日目(インデックス6)なので、週番号を計算する際にこの日数を加算して Week 1 に収まるようにする
+            const offset = (jan1DayOfWeek - weekStart + 7) % 7;
+            
+            // 経過日数にオフセットを加え、7で割って切り上げると週番号になる
+            return Math.ceil((dayOfYear + offset) / 7);
+        }
+        
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
         }
         
         function formatTimeRemaining(milliseconds) {
@@ -712,17 +721,16 @@
             const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
             const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
             
+            // daysRemaining/hoursRemaining/minutesRemainingの先頭の「残り」を削除
+            const dayLabel = t.daysRemaining.replace(t.remaining, '').trim();
+            const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
+            const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
+            
             if (totalDays > 0) {
-                // daysRemaining/hoursRemaining/minutesRemainingの先頭の「残り」を削除
-                const dayLabel = t.daysRemaining.replace(t.remaining, '').trim();
-                const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
                 return `${totalDays}${dayLabel} ${hours}${hourLabel}`;
             } else if (hours > 0) {
-                const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
-                const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
                 return `${hours}${hourLabel} ${minutes}${minuteLabel}`;
             } else {
-                const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
                 return `${minutes}${minuteLabel}`;
             }
         }
@@ -761,7 +769,6 @@
             const daysInYear = getDayOfYear(now);
             const daysRemainingInYear = (yearEnd - now) / (1000 * 60 * 60 * 24);
             
-            // Update year title with specific year
             const yearTitleText = currentLang === 'ja' ? `${year}年の進捗` : `${year} Progress`;
             document.getElementById('yearTitle').textContent = yearTitleText;
             document.getElementById('yearPercent').textContent = `${yearPercent}%`;
@@ -779,7 +786,6 @@
             const daysInCurrentMonth = getDaysInMonth(year, month);
             const daysRemainingInMonth = daysInCurrentMonth - date;
             
-            // Update month title with specific month
             const monthTitleText = currentLang === 'ja' ? `${month + 1}月の進捗` : `${t.months[month]} Progress`;
             document.getElementById('monthTitle').textContent = monthTitleText;
             document.getElementById('monthPercent').textContent = `${monthPercent}%`;
@@ -811,12 +817,16 @@
             const weekElapsed = now - weekStart;
             const weekPercent = Math.min(100, Math.max(0, Math.floor((weekElapsed / weekTotal) * 100)));
             const daysElapsedInWeek = Math.floor(weekElapsed / (1000 * 60 * 60 * 24));
-            const daysRemainingInWeek = 7 - daysElapsedInWeek;
+            
+            // ⭐ 修正3: 残り日数を正確に計算
+            const daysRemainingInWeek = Math.max(
+                0,
+                Math.ceil((weekEnd - now) / (1000 * 60 * 60 * 24))
+            );
             
             document.getElementById('weekPercent').textContent = `${weekPercent}%`;
             document.getElementById('weekBar').style.width = `${weekPercent}%`;
             
-            // Update week start label based on selected day
             if (weekStartDay === 0) {
                 document.getElementById('weekStart').textContent = t.fromSunday;
             } else if (weekStartDay === 1) {
@@ -827,8 +837,6 @@
             
             document.getElementById('weekProgress').textContent = `${daysElapsedInWeek} ${t.daysElapsed}`;
             document.getElementById('weekRemaining').textContent = `${daysRemainingInWeek} ${t.daysRemaining}`;
-            
-            // Week title remains static
             document.getElementById('weekTitle').textContent = t.week;
             
             // 日の進捗
@@ -840,7 +848,6 @@
             const hoursElapsed = Math.floor(dayElapsed / (1000 * 60 * 60));
             const hoursRemaining = 24 - hoursElapsed;
             
-            // Update day title with specific date
             const dayTitleText = currentLang === 'ja' ? `${date}日の進捗` : `${t.months[month]} ${date} Progress`;
             document.getElementById('dayTitle').textContent = dayTitleText;
             document.getElementById('dayPercent').textContent = `${dayPercent}%`;
@@ -858,7 +865,6 @@
             const minutesElapsed = Math.floor(hourElapsed / (1000 * 60));
             const minutesRemaining = 60 - minutesElapsed;
             
-            // Update hour title with specific hour
             const hourTitleText = currentLang === 'ja' ? `${hours}時の進捗` : `${hours}:00 Progress`;
             document.getElementById('hourTitle').textContent = hourTitleText;
             document.getElementById('hourPercent').textContent = `${hourPercent}%`;
@@ -872,7 +878,6 @@
                 const targetTotal = targetEndDate - targetStartDate;
                 const targetElapsed = now - targetStartDate;
                 
-                // 期間がゼロまたは負の場合はエラー表示
                 if (targetTotal <= 0) {
                     document.getElementById('targetContainer').style.display = 'none';
                     document.getElementById('targetStart').textContent = '⚠️ 無効な期間';
@@ -889,29 +894,24 @@
                 document.getElementById('targetPercent').textContent = `${targetPercent}%`;
                 document.getElementById('targetBar').style.width = `${targetPercent}%`;
                 
-                // Format start and end dates
                 const startStr = `${targetStartDate.getMonth() + 1}/${targetStartDate.getDate()} ${targetStartDate.getHours().toString().padStart(2, '0')}:${targetStartDate.getMinutes().toString().padStart(2, '0')}`;
                 document.getElementById('targetStart').textContent = `🎯 ${startStr} →`;
                 
-                // Calculate elapsed and remaining
                 if (targetPercent >= 100) {
-                    // 完了
                     document.getElementById('targetProgress').textContent = t.elapsed;
                     document.getElementById('targetRemaining').textContent = t.completed;
-                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #4ECDC4, #A8E6CF)'; // Completed color
+                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #4ECDC4, #A8E6CF)';
                 } else if (targetPercent <= 0 && targetElapsed < 0) {
-                     // 開始前
                      const remainingTime = targetStartDate - now;
                      document.getElementById('targetProgress').textContent = `${t.remaining} ${formatTimeRemaining(remainingTime)}`;
                      document.getElementById('targetRemaining').textContent = t.elapsed;
-                     document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #F4A261, #FFD3B6)'; // Pre-start color
-                     document.getElementById('targetBar').style.width = '0%'; // 開始前は0%
+                     document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #F4A261, #FFD3B6)';
+                     document.getElementById('targetBar').style.width = '0%';
                 } else {
-                    // 進行中
                     const elapsedDays = Math.floor(targetElapsed / (1000 * 60 * 60 * 24));
                     document.getElementById('targetProgress').textContent = `${elapsedDays}${t.daysElapsed.replace('経過', '').trim()} ${t.elapsed}`;
                     document.getElementById('targetRemaining').textContent = `${t.remaining} ${formatTimeRemaining(targetRemaining)}`;
-                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #A8E6CF, #FFD3B6)'; // In-progress color
+                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #A8E6CF, #FFD3B6)';
                 }
             } else {
                 document.getElementById('targetContainer').style.display = 'none';
@@ -923,8 +923,11 @@
             
             // 統計情報
             const daysInCurrentYear = new Date(year, 11, 31) - yearStart;
-            document.getElementById('yearDay').textContent = `${daysInYear}/${Math.ceil(daysInCurrentYear / (1000 * 60 * 60 * 24))}`; // 日数
-            document.getElementById('weekNumber').textContent = getWeekNumber(now);
+            document.getElementById('yearDay').textContent = `${daysInYear}/${Math.ceil(daysInCurrentYear / (1000 * 60 * 60 * 24))}`;
+            
+            // ⭐ 修正4: カスタム週番号を使用
+            document.getElementById('weekNumber').textContent = getCustomWeekNumber(now, weekStartDay);
+            
             document.getElementById('dayOfWeek').textContent = t.weekdays[weekday];
             document.getElementById('totalMinutes').textContent = hours * 60 + minutes;
         }
@@ -943,7 +946,6 @@
             updateTimeProgress();
         });
         
-        // ⭐ ID修正済みの入力フィールドを使用
         document.getElementById('setTargetBtn').addEventListener('click', () => {
             const startInput = document.getElementById('targetStartDateInput').value;
             const endInput = document.getElementById('targetEndDateInput').value;
@@ -952,7 +954,7 @@
                 targetStartDate = new Date(startInput);
                 targetEndDate = new Date(endInput);
                 
-                // LocalStorageに目標を保存する（オプション）
+                // LocalStorageに目標を保存
                 localStorage.setItem('targetStartDate', startInput);
                 localStorage.setItem('targetEndDate', endInput);
                 
@@ -972,7 +974,7 @@
         
         // 初期化処理
         (function initialize() {
-            // 1. 設定のロード
+            // 1. 設定のロード (URLパラメータ & LocalStorage)
             loadSettings();
             
             // 2. カスタム目標のLocalStorageからの復元
