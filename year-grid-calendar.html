@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year Grid Calendar - Visual Time Progress</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* ヘッダー */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        h1 {
+            font-weight: 200;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .lang-btn, .view-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .lang-btn:hover, .view-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .view-btn.active {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        /* 統計カード */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 200;
+            margin-bottom: 5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 10px;
+        }
+
+        .progress-ring circle {
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        /* カレンダーグリッド */
+        .calendar-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .year-grid {
+            display: grid;
+            gap: 2px;
+            margin-top: 20px;
+        }
+
+        /* 365日表示 */
+        .year-grid.daily {
+            grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
+        }
+
+        /* 週表示（53週） */
+        .year-grid.weekly {
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+        }
+
+        /* 月表示（12ヶ月） */
+        .year-grid.monthly {
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            min-height: 20px;
+        }
+
+        .day-cell.passed {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            animation: fillIn 0.5s ease;
+        }
+
+        .day-cell.today {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .day-cell.future {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .day-cell.weekend {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .day-cell.weekend.passed {
+            background: linear-gradient(135deg, #95a5d3, #7b88b3);
+        }
+
+        @keyframes fillIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* ツールチップ */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 5px;
+        }
+
+        .day-cell:hover .tooltip {
+            opacity: 1;
+        }
+
+        /* 月のラベル */
+        .month-labels {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .month-label {
+            text-align: center;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .year-grid.daily {
+                grid-template-columns: repeat(auto-fill, minmax(15px, 1fr));
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .year-grid.daily {
+                grid-template-columns: repeat(auto-fill, minmax(10px, 1fr));
+            }
+            
+            .controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .tooltip {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 凡例 */
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="title">📅 年間カレンダー</h1>
+            <div class="controls">
+                <button class="view-btn active" id="dailyBtn" onclick="changeView('daily')">365日</button>
+                <button class="view-btn" id="weeklyBtn" onclick="changeView('weekly')">週表示</button>
+                <button class="view-btn" id="monthlyBtn" onclick="changeView('monthly')">月表示</button>
+                <button class="lang-btn" id="langBtn">🌐 English</button>
+            </div>
+        </div>
+        
+        <!-- 統計情報 -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255, 255, 255, 0.1)" stroke-width="8"/>
+                        <circle id="progressCircle" cx="60" cy="60" r="54" fill="none" stroke="url(#gradient)" stroke-width="8" 
+                                stroke-dasharray="339.292" stroke-dashoffset="339.292" 
+                                transform="rotate(-90 60 60)"/>
+                        <defs>
+                            <linearGradient id="gradient">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="stat-value" id="yearProgress">0%</div>
+                <div class="stat-label" id="yearProgressLabel">年間進捗</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="dayNumber">1</div>
+                <div class="stat-label" id="dayNumberLabel">今年の日数</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="daysRemaining">365</div>
+                <div class="stat-label" id="daysRemainingLabel">残り日数</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="currentDate">1月1日</div>
+                <div class="stat-label" id="todayLabel">今日</div>
+            </div>
+        </div>
+        
+        <!-- カレンダーグリッド -->
+        <div class="calendar-container">
+            <div class="month-labels" id="monthLabels"></div>
+            <div class="year-grid daily" id="yearGrid"></div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                    <span id="passedLabel">経過</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></div>
+                    <span id="todayLegendLabel">今日</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);"></div>
+                    <span id="futureLabel">未来</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 言語設定
+        const translations = {
+            ja: {
+                title: '📅 年間カレンダー',
+                yearProgress: '年間進捗',
+                dayNumber: '今年の日数',
+                daysRemaining: '残り日数',
+                today: '今日',
+                passed: '経過',
+                future: '未来',
+                daily: '365日',
+                weekly: '週表示',
+                monthly: '月表示',
+                weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+                months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                week: '週'
+            },
+            en: {
+                title: '📅 Year Calendar',
+                yearProgress: 'Year Progress',
+                dayNumber: 'Day of Year',
+                daysRemaining: 'Days Remaining',
+                today: 'Today',
+                passed: 'Passed',
+                future: 'Future',
+                daily: '365 Days',
+                weekly: 'Weekly',
+                monthly: 'Monthly',
+                weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                week: 'Week'
+            }
+        };
+        
+        let currentLang = 'ja';
+        let currentView = 'daily';
+        
+        function isLeapYear(year) {
+            return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+        }
+        
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+        
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+        
+        function changeView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(view + 'Btn').classList.add('active');
+            renderCalendar();
+        }
+        
+        function renderCalendar() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const today = getDayOfYear(now);
+            const grid = document.getElementById('yearGrid');
+            const t = translations[currentLang];
+            
+            grid.innerHTML = '';
+            grid.className = `year-grid ${currentView}`;
+            
+            if (currentView === 'daily') {
+                renderDailyView(year, today);
+            } else if (currentView === 'weekly') {
+                renderWeeklyView(year, now);
+            } else if (currentView === 'monthly') {
+                renderMonthlyView(year, now);
+            }
+        }
+        
+        function renderDailyView(year, today) {
+            const daysInYear = isLeapYear(year) ? 366 : 365;
+            const grid = document.getElementById('yearGrid');
+            const t = translations[currentLang];
+            
+            for (let day = 1; day <= daysInYear; day++) {
+                const date = new Date(year, 0, day);
+                const dayOfWeek = date.getDay();
+                const month = date.getMonth();
+                const dayOfMonth = date.getDate();
+                
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                if (day < today) {
+                    cell.classList.add('passed');
+                } else if (day === today) {
+                    cell.classList.add('today');
+                } else {
+                    cell.classList.add('future');
+                }
+                
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    cell.classList.add('weekend');
+                }
+                
+                // ツールチップ
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = `${t.months[month]} ${dayOfMonth} (${t.weekdays[dayOfWeek]})`;
+                cell.appendChild(tooltip);
+                
+                grid.appendChild(cell);
+            }
+        }
+        
+        function renderWeeklyView(year, now) {
+            const grid = document.getElementById('yearGrid');
+            const t = translations[currentLang];
+            const currentWeek = getWeekNumber(now);
+            
+            for (let week = 1; week <= 53; week++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                
+                if (week < currentWeek) {
+                    cell.classList.add('passed');
+                } else if (week === currentWeek) {
+                    cell.classList.add('today');
+                } else {
+                    cell.classList.add('future');
+                }
+                
+                // ツールチップ
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = `${t.week} ${week}`;
+                cell.appendChild(tooltip);
+                
+                grid.appendChild(cell);
+            }
+        }
+        
+        function renderMonthlyView(year, now) {
+            const grid = document.getElementById('yearGrid');
+            const t = translations[currentLang];
+            const currentMonth = now.getMonth();
+            
+            for (let month = 0; month < 12; month++) {
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                cell.style.minHeight = '60px';
+                cell.style.display = 'flex';
+                cell.style.alignItems = 'center';
+                cell.style.justifyContent = 'center';
+                cell.style.fontSize = '0.9rem';
+                cell.textContent = t.months[month];
+                
+                if (month < currentMonth) {
+                    cell.classList.add('passed');
+                } else if (month === currentMonth) {
+                    cell.classList.add('today');
+                } else {
+                    cell.classList.add('future');
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
+        
+        function updateStats() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const t = translations[currentLang];
+            
+            const dayOfYear = getDayOfYear(now);
+            const daysInYear = isLeapYear(year) ? 366 : 365;
+            const daysRemaining = daysInYear - dayOfYear;
+            const yearProgress = Math.round((dayOfYear / daysInYear) * 100);
+            
+            // 統計更新
+            document.getElementById('yearProgress').textContent = `${yearProgress}%`;
+            document.getElementById('dayNumber').textContent = `${dayOfYear}/${daysInYear}`;
+            document.getElementById('daysRemaining').textContent = daysRemaining;
+            
+            // 日付表示
+            const month = now.getMonth();
+            const date = now.getDate();
+            const dateStr = currentLang === 'ja' ? 
+                `${month + 1}月${date}日` : 
+                `${t.months[month]} ${date}`;
+            document.getElementById('currentDate').textContent = dateStr;
+            
+            // プログレスリング更新
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 54;
+            const offset = circumference - (yearProgress / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+        
+        function updateLanguage() {
+            const t = translations[currentLang];
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('yearProgressLabel').textContent = t.yearProgress;
+            document.getElementById('dayNumberLabel').textContent = t.dayNumber;
+            document.getElementById('daysRemainingLabel').textContent = t.daysRemaining;
+            document.getElementById('todayLabel').textContent = t.today;
+            document.getElementById('passedLabel').textContent = t.passed;
+            document.getElementById('todayLegendLabel').textContent = t.today;
+            document.getElementById('futureLabel').textContent = t.future;
+            document.getElementById('dailyBtn').textContent = t.daily;
+            document.getElementById('weeklyBtn').textContent = t.weekly;
+            document.getElementById('monthlyBtn').textContent = t.monthly;
+            document.getElementById('langBtn').textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
+            
+            // 月ラベル更新
+            const monthLabels = document.getElementById('monthLabels');
+            monthLabels.innerHTML = '';
+            if (currentView === 'daily') {
+                t.months.forEach(month => {
+                    const label = document.createElement('div');
+                    label.className = 'month-label';
+                    label.textContent = month;
+                    monthLabels.appendChild(label);
+                });
+            }
+        }
+        
+        // イベントリスナー
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'ja' ? 'en' : 'ja';
+            updateLanguage();
+            renderCalendar();
+            updateStats();
+        });
+        
+        // 初期化
+        function init() {
+            updateLanguage();
+            renderCalendar();
+            updateStats();
+            
+            // 毎分更新（日付が変わった時のため）
+            setInterval(() => {
+                renderCalendar();
+                updateStats();
+            }, 60000);
+        }
+        
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Progress - Visual Time Tracker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        /* 言語切り替えボタン */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-weight: 200;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* 現在時刻表示 */
+        .current-time {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .time-display {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 200;
+            margin-bottom: 10px;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .date-display {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            font-weight: 300;
+        }
+
+        /* プログレスカード */
+        .progress-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .progress-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-icon {
+            font-size: 1.5rem;
+        }
+
+        .progress-value {
+            font-size: 1.8rem;
+            font-weight: 200;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* プログレスバー */
+        .progress-bar-container {
+            width: 100%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 0;
+            transition: width 1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 光沢エフェクト */
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        /* アニメーション */
+        .shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* 各時間帯の色分け */
+        .progress-bar.year {
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
+        }
+
+        .progress-bar.month {
+            background: linear-gradient(90deg, #95E1D3, #3D5A80);
+        }
+
+        .progress-bar.week {
+            background: linear-gradient(90deg, #F4A261, #E76F51);
+        }
+
+        .progress-bar.day {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .progress-bar.hour {
+            background: linear-gradient(90deg, #56CCF2, #2F80ED);
+        }
+
+        /* マイルストーンマーカー */
+        .milestones {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+        .milestone {
+            position: absolute;
+            width: 1px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            top: 0;
+        }
+
+        .milestone.quarter { left: 25%; }
+        .milestone.half { left: 50%; width: 2px; background: rgba(255, 255, 255, 0.3); }
+        .milestone.three-quarter { left: 75%; }
+
+        /* 統計情報 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 200;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .progress-card {
+                padding: 15px;
+            }
+            
+            .progress-value {
+                font-size: 1.5rem;
+            }
+            
+            .progress-title {
+                font-size: 1rem;
+            }
+            
+            .progress-bar-container {
+                height: 35px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 400px) {
+            .progress-details {
+                font-size: 0.8rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="title">📊 時間の経過</h1>
+            <button class="lang-btn" id="langBtn">🌐 English</button>
+        </div>
+        
+        <!-- 設定 -->
+        <div class="current-time" style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <div>
+                    <label for="weekStartDay" style="font-size: 0.9rem; opacity: 0.8;" id="weekStartLabel">週の開始曜日:</label>
+                    <select id="weekStartDay" style="
+                        background: rgba(30, 30, 50, 0.9);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: white;
+                        padding: 5px 10px;
+                        border-radius: 10px;
+                        margin-left: 10px;
+                        cursor: pointer;
+                    ">
+                        <option value="1" style="background: #2a2a3e; color: white;">月曜日</option>
+                        <option value="0" style="background: #2a2a3e; color: white;">日曜日</option>
+                        <option value="6" style="background: #2a2a3e; color: white;">土曜日</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 現在時刻 -->
+        <div class="current-time">
+            <div class="time-display" id="currentTime">--:--:--</div>
+            <div class="date-display" id="currentDate">----年--月--日</div>
+        </div>
+        
+        <!-- 年の進捗 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">📅</span>
+                    <span id="yearTitle">今年</span>
+                </div>
+                <div class="progress-value" id="yearPercent">--%</div>
+            </div>
+            <div class="progress-details">
+                <span id="yearStart">1月1日から</span>
+                <span id="yearProgress">---日経過</span>
+                <span id="yearRemaining">残り---日</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar year" id="yearBar" style="width: 0%">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 月の進捗 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">🗓️</span>
+                    <span id="monthTitle">今月</span>
+                </div>
+                <div class="progress-value" id="monthPercent">--%</div>
+            </div>
+            <div class="progress-details">
+                <span id="monthStart">-月1日から</span>
+                <span id="monthProgress">--日経過</span>
+                <span id="monthRemaining">残り--日</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar month" id="monthBar" style="width: 0%">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 週の進捗 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">📆</span>
+                    <span id="weekTitle">今週</span>
+                </div>
+                <div class="progress-value" id="weekPercent">--%</div>
+            </div>
+            <div class="progress-details">
+                <span id="weekStart">月曜から</span>
+                <span id="weekProgress">--日経過</span>
+                <span id="weekRemaining">残り--日</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar week" id="weekBar" style="width: 0%">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 日の進捗 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">☀️</span>
+                    <span id="dayTitle">今日</span>
+                </div>
+                <div class="progress-value" id="dayPercent">--%</div>
+            </div>
+            <div class="progress-details">
+                <span id="dayStart">0:00から</span>
+                <span id="dayProgress">--時間経過</span>
+                <span id="dayRemaining">残り--時間</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar day" id="dayBar" style="width: 0%">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 時間の進捗 -->
+        <div class="progress-card">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">⏰</span>
+                    <span id="hourTitle">現在の時間</span>
+                </div>
+                <div class="progress-value" id="hourPercent">--%</div>
+            </div>
+            <div class="progress-details">
+                <span id="hourStart">--:00から</span>
+                <span id="hourProgress">--分経過</span>
+                <span id="hourRemaining">残り--分</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar hour" id="hourBar" style="width: 0%">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- カスタム目標日時 -->
+        <div class="progress-card" style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3);">
+            <div class="progress-header">
+                <div class="progress-title">
+                    <span class="progress-icon">🎯</span>
+                    <span id="targetTitle">目標日時</span>
+                </div>
+                <div class="progress-value" id="targetPercent">--%</div>
+            </div>
+            <div class="progress-details" style="margin-bottom: 15px;">
+                <span id="targetStart">開始日時</span>
+                <span id="targetProgress">--経過</span>
+                <span id="targetRemaining">残り--</span>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;">
+                <input type="datetime-local" id="targetStartDate" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: white;
+                    padding: 8px;
+                    border-radius: 10px;
+                    flex: 1;
+                    min-width: 200px;
+                ">
+                <span style="opacity: 0.8;">→</span>
+                <input type="datetime-local" id="targetEndDate" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: white;
+                    padding: 8px;
+                    border-radius: 10px;
+                    flex: 1;
+                    min-width: 200px;
+                ">
+                <button id="setTargetBtn" style="
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border: none;
+                    color: white;
+                    padding: 8px 20px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                ">設定</button>
+            </div>
+            <div class="progress-bar-container" id="targetContainer" style="display: none; margin-top: 15px;">
+                <div class="progress-bar target" id="targetBar" style="width: 0%; background: linear-gradient(90deg, #A8E6CF, #FFD3B6);">
+                    <div class="shine"></div>
+                </div>
+                <div class="milestones">
+                    <div class="milestone quarter"></div>
+                    <div class="milestone half"></div>
+                    <div class="milestone three-quarter"></div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="datetime-local" id="targetStartDate" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: white;
+                    padding: 8px;
+                    border-radius: 10px;
+                    flex: 1;
+                    min-width: 200px;
+                ">
+                <span style="opacity: 0.8;">→</span>
+                <input type="datetime-local" id="targetEndDate" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: white;
+                    padding: 8px;
+                    border-radius: 10px;
+                    flex: 1;
+                    min-width: 200px;
+                ">
+                <button id="setTargetBtn" style="
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border: none;
+                    color: white;
+                    padding: 8px 20px;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                ">設定</button>
+            </div>
+        </div>
+        
+        <!-- 統計情報 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="yearDay">---</div>
+                <div class="stat-label" id="yearDayLabel">今年の日数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="weekNumber">--</div>
+                <div class="stat-label" id="weekNumberLabel">今年の週番号</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="dayOfWeek">--</div>
+                <div class="stat-label" id="dayOfWeekLabel">曜日</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalMinutes">----</div>
+                <div class="stat-label" id="totalMinutesLabel">今日の経過分数</div>
+            </div>
+        </div>
+        
+        <!-- Ko-fi Support Button -->
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+            <script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'L4L61PTJ5F');kofiwidget2.draw();</script>
+        </div>
+    </div>
+
+    <script>
+        // 言語設定
+        const translations = {
+            ja: {
+                title: '📊 時間の経過',
+                year: '今年',
+                month: '今月',
+                week: '今週', 
+                day: '今日',
+                hour: '現在の時間',
+                target: '目標日時',
+                fromJan: '1月1日から',
+                fromMonthStart: '月1日から',
+                fromMonday: '月曜から',
+                fromSunday: '日曜から',
+                fromSaturday: '土曜から',
+                fromMidnight: '0:00から',
+                fromHourStart: ':00から',
+                daysElapsed: '日経過',
+                hoursElapsed: '時間経過',
+                minutesElapsed: '分経過',
+                daysRemaining: '残り日',
+                hoursRemaining: '残り時間',
+                minutesRemaining: '残り分',
+                dayOfYear: '今年の日数',
+                weekOfYear: '今年の週番号',
+                dayOfWeek: '曜日',
+                minutesToday: '今日の経過分数',
+                weekdays: ['日', '月', '火', '水', '木', '金', '土'],
+                months: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                weekStartLabel: '週の開始曜日:',
+                monday: '月曜日',
+                sunday: '日曜日',
+                saturday: '土曜日',
+                setTarget: '設定',
+                targetNotSet: '目標を設定してください',
+                elapsed: '経過',
+                remaining: '残り'
+            },
+            en: {
+                title: '📊 Time Progress',
+                year: 'This Year',
+                month: 'This Month',
+                week: 'This Week',
+                day: 'Today',
+                hour: 'Current Hour',
+                target: 'Target Date',
+                fromJan: 'From Jan 1',
+                fromMonthStart: 'From 1st',
+                fromMonday: 'From Monday',
+                fromSunday: 'From Sunday', 
+                fromSaturday: 'From Saturday',
+                fromMidnight: 'From 0:00',
+                fromHourStart: ':00',
+                daysElapsed: 'days elapsed',
+                hoursElapsed: 'hours elapsed',
+                minutesElapsed: 'min elapsed',
+                daysRemaining: 'days left',
+                hoursRemaining: 'hours left',
+                minutesRemaining: 'min left',
+                dayOfYear: 'Day of Year',
+                weekOfYear: 'Week Number',
+                dayOfWeek: 'Day of Week',
+                minutesToday: "Today's Minutes",
+                weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                weekStartLabel: 'Week starts on:',
+                monday: 'Monday',
+                sunday: 'Sunday',
+                saturday: 'Saturday',
+                setTarget: 'Set',
+                targetNotSet: 'Set your target date',
+                elapsed: 'elapsed',
+                remaining: 'remaining'
+            }
+        };
+        
+        let currentLang = 'ja';
+        let weekStartDay = 1; // 1 = Monday, 0 = Sunday, 6 = Saturday
+        let targetStartDate = null;
+        let targetEndDate = null;
+        
+        function updateLanguage() {
+            const t = translations[currentLang];
+            document.getElementById('title').textContent = t.title;
+            // Titles are now updated dynamically in updateTimeProgress
+            document.getElementById('targetTitle').textContent = t.target;
+            document.getElementById('yearDayLabel').textContent = t.dayOfYear;
+            document.getElementById('weekNumberLabel').textContent = t.weekOfYear;
+            document.getElementById('dayOfWeekLabel').textContent = t.dayOfWeek;
+            document.getElementById('totalMinutesLabel').textContent = t.minutesToday;
+            document.getElementById('weekStartLabel').textContent = t.weekStartLabel;
+            document.getElementById('setTargetBtn').textContent = t.setTarget;
+            document.getElementById('langBtn').textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
+            
+            // Update week start day options
+            const weekStartSelect = document.getElementById('weekStartDay');
+            weekStartSelect.options[0].text = t.monday;
+            weekStartSelect.options[1].text = t.sunday;
+            weekStartSelect.options[2].text = t.saturday;
+        }
+        
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+        
+        function getDaysInMonth(year, month) {
+            return new Date(year, month + 1, 0).getDate();
+        }
+        
+        function getDayOfYear(date) {
+            const start = new Date(date.getFullYear(), 0, 0);
+            const diff = date - start;
+            return Math.floor(diff / (1000 * 60 * 60 * 24));
+        }
+        
+        function formatTimeRemaining(milliseconds) {
+            const t = translations[currentLang];
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const days = Math.floor(totalSeconds / (60 * 60 * 24));
+            const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+            const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+            
+            if (days > 0) {
+                return `${days}${t.daysRemaining.replace('残り', '')} ${hours}${t.hoursRemaining.replace('残り', '')}`;
+            } else if (hours > 0) {
+                return `${hours}${t.hoursRemaining.replace('残り', '')} ${minutes}${t.minutesRemaining.replace('残り', '')}`;
+            } else {
+                return `${minutes}${t.minutesRemaining.replace('残り', '')}`;
+            }
+        }
+        
+        function updateTimeProgress() {
+            const now = new Date();
+            const t = translations[currentLang];
+            
+            // 現在時刻の表示
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('currentTime').textContent = timeStr;
+            
+            // 日付の表示
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const date = now.getDate();
+            const weekday = now.getDay();
+            
+            if (currentLang === 'ja') {
+                document.getElementById('currentDate').textContent = 
+                    `${year}年${month + 1}月${date}日（${t.weekdays[weekday]}）`;
+            } else {
+                document.getElementById('currentDate').textContent = 
+                    `${t.months[month]} ${date}, ${year} (${t.weekdays[weekday]})`;
+            }
+            
+            // 年の進捗
+            const yearStart = new Date(year, 0, 1);
+            const yearEnd = new Date(year + 1, 0, 1);
+            const yearTotal = yearEnd - yearStart;
+            const yearElapsed = now - yearStart;
+            const yearPercent = Math.floor((yearElapsed / yearTotal) * 100);
+            const daysInYear = getDayOfYear(now);
+            const daysRemainingInYear = (new Date(year, 11, 31) - now) / (1000 * 60 * 60 * 24);
+            
+            // Update year title with specific year
+            const yearTitleText = currentLang === 'ja' ? `${year}年の進捗` : `${year} Progress`;
+            document.getElementById('yearTitle').textContent = yearTitleText;
+            document.getElementById('yearPercent').textContent = `${yearPercent}%`;
+            document.getElementById('yearBar').style.width = `${yearPercent}%`;
+            document.getElementById('yearStart').textContent = t.fromJan;
+            document.getElementById('yearProgress').textContent = `${daysInYear} ${t.daysElapsed}`;
+            document.getElementById('yearRemaining').textContent = `${Math.ceil(daysRemainingInYear)} ${t.daysRemaining}`;
+            
+            // 月の進捗
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 1);
+            const monthTotal = monthEnd - monthStart;
+            const monthElapsed = now - monthStart;
+            const monthPercent = Math.floor((monthElapsed / monthTotal) * 100);
+            const daysInCurrentMonth = getDaysInMonth(year, month);
+            const daysRemainingInMonth = daysInCurrentMonth - date;
+            
+            // Update month title with specific month
+            const monthTitleText = currentLang === 'ja' ? `${month + 1}月の進捗` : `${t.months[month]} Progress`;
+            document.getElementById('monthTitle').textContent = monthTitleText;
+            document.getElementById('monthPercent').textContent = `${monthPercent}%`;
+            document.getElementById('monthBar').style.width = `${monthPercent}%`;
+            document.getElementById('monthStart').textContent = currentLang === 'ja' ? 
+                `${month + 1}${t.fromMonthStart}` : `${t.fromMonthStart}`;
+            document.getElementById('monthProgress').textContent = `${date} ${t.daysElapsed}`;
+            document.getElementById('monthRemaining').textContent = `${daysRemainingInMonth} ${t.daysRemaining}`;
+            
+            // 週の進捗（カスタム開始曜日）
+            weekStartDay = parseInt(document.getElementById('weekStartDay').value);
+            const currentDayOfWeek = weekday;
+            let daysFromWeekStart;
+            
+            if (weekStartDay === 0) { // Sunday start
+                daysFromWeekStart = currentDayOfWeek;
+            } else if (weekStartDay === 1) { // Monday start
+                daysFromWeekStart = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+            } else if (weekStartDay === 6) { // Saturday start
+                daysFromWeekStart = (currentDayOfWeek + 1) % 7;
+            }
+            
+            const weekStart = new Date(now);
+            weekStart.setDate(date - daysFromWeekStart);
+            weekStart.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 7);
+            const weekTotal = weekEnd - weekStart;
+            const weekElapsed = now - weekStart;
+            const weekPercent = Math.floor((weekElapsed / weekTotal) * 100);
+            const daysElapsedInWeek = Math.floor(weekElapsed / (1000 * 60 * 60 * 24));
+            const daysRemainingInWeek = 7 - daysElapsedInWeek;
+            
+            document.getElementById('weekPercent').textContent = `${weekPercent}%`;
+            document.getElementById('weekBar').style.width = `${weekPercent}%`;
+            
+            // Update week start label based on selected day
+            if (weekStartDay === 0) {
+                document.getElementById('weekStart').textContent = t.fromSunday;
+            } else if (weekStartDay === 1) {
+                document.getElementById('weekStart').textContent = t.fromMonday;
+            } else if (weekStartDay === 6) {
+                document.getElementById('weekStart').textContent = t.fromSaturday;
+            }
+            
+            document.getElementById('weekProgress').textContent = `${daysElapsedInWeek} ${t.daysElapsed}`;
+            document.getElementById('weekRemaining').textContent = `${daysRemainingInWeek} ${t.daysRemaining}`;
+            
+            // Week title remains static
+            document.getElementById('weekTitle').textContent = t.week;
+            
+            // 日の進捗
+            const dayStart = new Date(year, month, date, 0, 0, 0);
+            const dayEnd = new Date(year, month, date + 1, 0, 0, 0);
+            const dayTotal = dayEnd - dayStart;
+            const dayElapsed = now - dayStart;
+            const dayPercent = Math.floor((dayElapsed / dayTotal) * 100);
+            const hoursElapsed = Math.floor(dayElapsed / (1000 * 60 * 60));
+            const hoursRemaining = 24 - hoursElapsed;
+            
+            // Update day title with specific date
+            const dayTitleText = currentLang === 'ja' ? `${date}日の進捗` : `${t.months[month]} ${date} Progress`;
+            document.getElementById('dayTitle').textContent = dayTitleText;
+            document.getElementById('dayPercent').textContent = `${dayPercent}%`;
+            document.getElementById('dayBar').style.width = `${dayPercent}%`;
+            document.getElementById('dayStart').textContent = t.fromMidnight;
+            document.getElementById('dayProgress').textContent = `${hoursElapsed} ${t.hoursElapsed}`;
+            document.getElementById('dayRemaining').textContent = `${hoursRemaining} ${t.hoursRemaining}`;
+            
+            // 時間の進捗
+            const hourStart = new Date(year, month, date, hours, 0, 0);
+            const hourEnd = new Date(year, month, date, hours + 1, 0, 0);
+            const hourTotal = hourEnd - hourStart;
+            const hourElapsed = now - hourStart;
+            const hourPercent = Math.floor((hourElapsed / hourTotal) * 100);
+            const minutesElapsed = Math.floor(hourElapsed / (1000 * 60));
+            const minutesRemaining = 60 - minutesElapsed;
+            
+            // Update hour title with specific hour
+            const hourTitleText = currentLang === 'ja' ? `${hours}時の進捗` : `${hours}:00 Progress`;
+            document.getElementById('hourTitle').textContent = hourTitleText;
+            document.getElementById('hourPercent').textContent = `${hourPercent}%`;
+            document.getElementById('hourBar').style.width = `${hourPercent}%`;
+            document.getElementById('hourStart').textContent = `${hours}${t.fromHourStart}`;
+            document.getElementById('hourProgress').textContent = `${minutesElapsed} ${t.minutesElapsed}`;
+            document.getElementById('hourRemaining').textContent = `${minutesRemaining} ${t.minutesRemaining}`;
+            
+            // カスタム目標日時の進捗
+            if (targetStartDate && targetEndDate) {
+                const targetTotal = targetEndDate - targetStartDate;
+                const targetElapsed = now - targetStartDate;
+                const targetPercent = Math.min(100, Math.max(0, Math.floor((targetElapsed / targetTotal) * 100)));
+                const targetRemaining = targetEndDate - now;
+                
+                document.getElementById('targetContainer').style.display = 'block';
+                document.getElementById('targetPercent').textContent = `${targetPercent}%`;
+                document.getElementById('targetBar').style.width = `${targetPercent}%`;
+                
+                // Format start and end dates
+                const startStr = `${targetStartDate.getMonth() + 1}/${targetStartDate.getDate()} ${targetStartDate.getHours()}:${targetStartDate.getMinutes().toString().padStart(2, '0')}`;
+                const endStr = `${targetEndDate.getMonth() + 1}/${targetEndDate.getDate()} ${targetEndDate.getHours()}:${targetEndDate.getMinutes().toString().padStart(2, '0')}`;
+                document.getElementById('targetStart').textContent = startStr + ' →';
+                
+                // Calculate elapsed and remaining
+                if (targetPercent >= 100) {
+                    document.getElementById('targetProgress').textContent = t.elapsed;
+                    document.getElementById('targetRemaining').textContent = '完了';
+                } else {
+                    const elapsedDays = Math.floor(targetElapsed / (1000 * 60 * 60 * 24));
+                    document.getElementById('targetProgress').textContent = `${elapsedDays}${t.daysElapsed.replace('経過', '')} ${t.elapsed}`;
+                    document.getElementById('targetRemaining').textContent = `${t.remaining} ${formatTimeRemaining(targetRemaining)}`;
+                }
+            } else {
+                document.getElementById('targetContainer').style.display = 'none';
+                document.getElementById('targetStart').textContent = t.targetNotSet;
+                document.getElementById('targetProgress').textContent = '';
+                document.getElementById('targetRemaining').textContent = '';
+            }
+            
+            // 統計情報
+            document.getElementById('yearDay').textContent = `${daysInYear}/365`;
+            document.getElementById('weekNumber').textContent = getWeekNumber(now);
+            document.getElementById('dayOfWeek').textContent = t.weekdays[weekday];
+            document.getElementById('totalMinutes').textContent = hours * 60 + minutes;
+        }
+        
+        // イベントリスナー
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'ja' ? 'en' : 'ja';
+            updateLanguage();
+            updateTimeProgress();
+        });
+        
+        document.getElementById('weekStartDay').addEventListener('change', () => {
+            updateTimeProgress();
+        });
+        
+        document.getElementById('setTargetBtn').addEventListener('click', () => {
+            const startInput = document.getElementById('targetStartDate').value;
+            const endInput = document.getElementById('targetEndDate').value;
+            
+            if (startInput && endInput) {
+                targetStartDate = new Date(startInput);
+                targetEndDate = new Date(endInput);
+                updateTimeProgress();
+            }
+        });
+        
+        // Set default values for target date inputs (today to tomorrow)
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const formatDateForInput = (date) => {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+        
+        document.getElementById('targetStartDate').value = formatDateForInput(now);
+        document.getElementById('targetEndDate').value = formatDateForInput(tomorrow);
+        
+        // 初期化
+        updateLanguage();
+        updateTimeProgress();
+        
+        // 1秒ごとに更新
+        setInterval(updateTimeProgress, 1000);
+    </script>
+</body>
+</html>
