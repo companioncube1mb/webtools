@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Progress - Visual Time Tracker</title>
+    <title>Time Progress - 時間の経過を視覚化 | 年・月・週の進捗トラッカー</title>
+    
+    <meta name="description" content="現在の年、月、週、日の進捗をリアルタイムで視覚化するタイムトラッカー。カスタム目標日時の進捗も追跡できます。">
+    <meta name="keywords" content="時間管理, タイムトラッカー, 進捗バー, プログレスバー, 年間計画, 目標設定, Time Progress">
+    <meta name="author" content="Your Name">
+    <meta property="og:title" content="Time Progress - 時間の経過を視覚化">
+    <meta property="og:description" content="現在の年、月、週、日の進捗をリアルタイムで視覚化するタイムトラッカー。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="YOUR_SITE_URL">
+    <link rel="canonical" href="YOUR_SITE_URL">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap');
         
@@ -284,6 +294,32 @@
                 text-align: center;
             }
         }
+        
+        /* フォームの共通スタイル */
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* datetime-localの矢印の色を白くする */
+        input[type="datetime-local"] {
+            color-scheme: dark; 
+        }
+
+        .form-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -293,7 +329,6 @@
             <button class="lang-btn" id="langBtn">🌐 English</button>
         </div>
         
-        <!-- 設定 -->
         <div class="current-time" style="margin-bottom: 20px;">
             <div style="display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <div>
@@ -315,13 +350,11 @@
             </div>
         </div>
         
-        <!-- 現在時刻 -->
         <div class="current-time">
             <div class="time-display" id="currentTime">--:--:--</div>
             <div class="date-display" id="currentDate">----年--月--日</div>
         </div>
         
-        <!-- 年の進捗 -->
         <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
@@ -347,7 +380,6 @@
             </div>
         </div>
         
-        <!-- 月の進捗 -->
         <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
@@ -373,7 +405,6 @@
             </div>
         </div>
         
-        <!-- 週の進捗 -->
         <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
@@ -399,7 +430,6 @@
             </div>
         </div>
         
-        <!-- 日の進捗 -->
         <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
@@ -425,7 +455,6 @@
             </div>
         </div>
         
-        <!-- 時間の進捗 -->
         <div class="progress-card">
             <div class="progress-header">
                 <div class="progress-title">
@@ -451,7 +480,6 @@
             </div>
         </div>
         
-        <!-- カスタム目標日時 -->
         <div class="progress-card" style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3);">
             <div class="progress-header">
                 <div class="progress-title">
@@ -465,36 +493,14 @@
                 <span id="targetProgress">--経過</span>
                 <span id="targetRemaining">残り--</span>
             </div>
+            
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;">
-                <input type="datetime-local" id="targetStartDate" style="
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                    padding: 8px;
-                    border-radius: 10px;
-                    flex: 1;
-                    min-width: 200px;
-                ">
+                <input type="datetime-local" id="targetStartDateInput" class="form-input">
                 <span style="opacity: 0.8;">→</span>
-                <input type="datetime-local" id="targetEndDate" style="
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                    padding: 8px;
-                    border-radius: 10px;
-                    flex: 1;
-                    min-width: 200px;
-                ">
-                <button id="setTargetBtn" style="
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    border: none;
-                    color: white;
-                    padding: 8px 20px;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                ">設定</button>
+                <input type="datetime-local" id="targetEndDateInput" class="form-input">
+                <button id="setTargetBtn" class="form-button">設定</button>
             </div>
+            
             <div class="progress-bar-container" id="targetContainer" style="display: none; margin-top: 15px;">
                 <div class="progress-bar target" id="targetBar" style="width: 0%; background: linear-gradient(90deg, #A8E6CF, #FFD3B6);">
                     <div class="shine"></div>
@@ -505,39 +511,8 @@
                     <div class="milestone three-quarter"></div>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <input type="datetime-local" id="targetStartDate" style="
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                    padding: 8px;
-                    border-radius: 10px;
-                    flex: 1;
-                    min-width: 200px;
-                ">
-                <span style="opacity: 0.8;">→</span>
-                <input type="datetime-local" id="targetEndDate" style="
-                    background: rgba(255, 255, 255, 0.1);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                    color: white;
-                    padding: 8px;
-                    border-radius: 10px;
-                    flex: 1;
-                    min-width: 200px;
-                ">
-                <button id="setTargetBtn" style="
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    border: none;
-                    color: white;
-                    padding: 8px 20px;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                ">設定</button>
-            </div>
         </div>
         
-        <!-- 統計情報 -->
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-value" id="yearDay">---</div>
@@ -557,7 +532,6 @@
             </div>
         </div>
         
-        <!-- Ko-fi Support Button -->
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
             <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
             <script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'L4L61PTJ5F');kofiwidget2.draw();</script>
@@ -601,7 +575,8 @@
                 setTarget: '設定',
                 targetNotSet: '目標を設定してください',
                 elapsed: '経過',
-                remaining: '残り'
+                remaining: '残り',
+                completed: '完了'
             },
             en: {
                 title: '📊 Time Progress',
@@ -637,14 +612,57 @@
                 setTarget: 'Set',
                 targetNotSet: 'Set your target date',
                 elapsed: 'elapsed',
-                remaining: 'remaining'
+                remaining: 'remaining',
+                completed: 'Completed'
             }
         };
         
+        // 状態変数の初期化
         let currentLang = 'ja';
         let weekStartDay = 1; // 1 = Monday, 0 = Sunday, 6 = Saturday
         let targetStartDate = null;
         let targetEndDate = null;
+        
+        // ⭐ 1. URLパラメータとLocalStrageから設定を読み込む
+        function loadSettings() {
+            const params = new URLSearchParams(window.location.search);
+            
+            // 言語設定の読み込み (URL > LocalStorage > Default)
+            const urlLang = params.get('lang');
+            const localLang = localStorage.getItem('lang');
+            if (urlLang && translations[urlLang]) {
+                currentLang = urlLang;
+            } else if (localLang && translations[localLang]) {
+                currentLang = localLang;
+            }
+            
+            // 週の開始曜日の読み込み (URL > LocalStorage > Default)
+            const urlWeekStart = params.get('weekStart');
+            const localWeekStart = localStorage.getItem('weekStart');
+            if (urlWeekStart !== null && ['0', '1', '6'].includes(urlWeekStart)) {
+                weekStartDay = parseInt(urlWeekStart);
+            } else if (localWeekStart !== null && ['0', '1', '6'].includes(localWeekStart)) {
+                weekStartDay = parseInt(localWeekStart);
+            }
+            
+            // Selectボックスの値を設定に合わせる
+            document.getElementById('weekStartDay').value = weekStartDay.toString();
+        }
+        
+        // ⭐ 2. LocalStorageに設定を保存し、URLを更新する
+        function saveSettings(updateUrl = true) {
+            // LocalStorage保存
+            localStorage.setItem('lang', currentLang);
+            localStorage.setItem('weekStart', weekStartDay.toString());
+            
+            // URLパラメータ更新
+            if (updateUrl) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('lang', currentLang);
+                url.searchParams.set('weekStart', weekStartDay.toString());
+                window.history.replaceState({}, '', url.toString());
+            }
+        }
         
         function updateLanguage() {
             const t = translations[currentLang];
@@ -664,6 +682,9 @@
             weekStartSelect.options[0].text = t.monday;
             weekStartSelect.options[1].text = t.sunday;
             weekStartSelect.options[2].text = t.saturday;
+            
+            // Update HTML lang attribute for SEO/Accessibility
+            document.documentElement.lang = currentLang;
         }
         
         function getWeekNumber(date) {
@@ -687,16 +708,22 @@
         function formatTimeRemaining(milliseconds) {
             const t = translations[currentLang];
             const totalSeconds = Math.floor(milliseconds / 1000);
-            const days = Math.floor(totalSeconds / (60 * 60 * 24));
+            const totalDays = Math.floor(totalSeconds / (60 * 60 * 24));
             const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
             const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
             
-            if (days > 0) {
-                return `${days}${t.daysRemaining.replace('残り', '')} ${hours}${t.hoursRemaining.replace('残り', '')}`;
+            if (totalDays > 0) {
+                // daysRemaining/hoursRemaining/minutesRemainingの先頭の「残り」を削除
+                const dayLabel = t.daysRemaining.replace(t.remaining, '').trim();
+                const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
+                return `${totalDays}${dayLabel} ${hours}${hourLabel}`;
             } else if (hours > 0) {
-                return `${hours}${t.hoursRemaining.replace('残り', '')} ${minutes}${t.minutesRemaining.replace('残り', '')}`;
+                const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
+                const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
+                return `${hours}${hourLabel} ${minutes}${minuteLabel}`;
             } else {
-                return `${minutes}${t.minutesRemaining.replace('残り', '')}`;
+                const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
+                return `${minutes}${minuteLabel}`;
             }
         }
         
@@ -730,9 +757,9 @@
             const yearEnd = new Date(year + 1, 0, 1);
             const yearTotal = yearEnd - yearStart;
             const yearElapsed = now - yearStart;
-            const yearPercent = Math.floor((yearElapsed / yearTotal) * 100);
+            const yearPercent = Math.min(100, Math.max(0, Math.floor((yearElapsed / yearTotal) * 100)));
             const daysInYear = getDayOfYear(now);
-            const daysRemainingInYear = (new Date(year, 11, 31) - now) / (1000 * 60 * 60 * 24);
+            const daysRemainingInYear = (yearEnd - now) / (1000 * 60 * 60 * 24);
             
             // Update year title with specific year
             const yearTitleText = currentLang === 'ja' ? `${year}年の進捗` : `${year} Progress`;
@@ -748,7 +775,7 @@
             const monthEnd = new Date(year, month + 1, 1);
             const monthTotal = monthEnd - monthStart;
             const monthElapsed = now - monthStart;
-            const monthPercent = Math.floor((monthElapsed / monthTotal) * 100);
+            const monthPercent = Math.min(100, Math.max(0, Math.floor((monthElapsed / monthTotal) * 100)));
             const daysInCurrentMonth = getDaysInMonth(year, month);
             const daysRemainingInMonth = daysInCurrentMonth - date;
             
@@ -767,11 +794,11 @@
             const currentDayOfWeek = weekday;
             let daysFromWeekStart;
             
-            if (weekStartDay === 0) { // Sunday start
+            if (weekStartDay === 0) { // Sunday start (0)
                 daysFromWeekStart = currentDayOfWeek;
-            } else if (weekStartDay === 1) { // Monday start
+            } else if (weekStartDay === 1) { // Monday start (1)
                 daysFromWeekStart = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
-            } else if (weekStartDay === 6) { // Saturday start
+            } else if (weekStartDay === 6) { // Saturday start (6)
                 daysFromWeekStart = (currentDayOfWeek + 1) % 7;
             }
             
@@ -782,7 +809,7 @@
             weekEnd.setDate(weekStart.getDate() + 7);
             const weekTotal = weekEnd - weekStart;
             const weekElapsed = now - weekStart;
-            const weekPercent = Math.floor((weekElapsed / weekTotal) * 100);
+            const weekPercent = Math.min(100, Math.max(0, Math.floor((weekElapsed / weekTotal) * 100)));
             const daysElapsedInWeek = Math.floor(weekElapsed / (1000 * 60 * 60 * 24));
             const daysRemainingInWeek = 7 - daysElapsedInWeek;
             
@@ -809,7 +836,7 @@
             const dayEnd = new Date(year, month, date + 1, 0, 0, 0);
             const dayTotal = dayEnd - dayStart;
             const dayElapsed = now - dayStart;
-            const dayPercent = Math.floor((dayElapsed / dayTotal) * 100);
+            const dayPercent = Math.min(100, Math.max(0, Math.floor((dayElapsed / dayTotal) * 100)));
             const hoursElapsed = Math.floor(dayElapsed / (1000 * 60 * 60));
             const hoursRemaining = 24 - hoursElapsed;
             
@@ -827,7 +854,7 @@
             const hourEnd = new Date(year, month, date, hours + 1, 0, 0);
             const hourTotal = hourEnd - hourStart;
             const hourElapsed = now - hourStart;
-            const hourPercent = Math.floor((hourElapsed / hourTotal) * 100);
+            const hourPercent = Math.min(100, Math.max(0, Math.floor((hourElapsed / hourTotal) * 100)));
             const minutesElapsed = Math.floor(hourElapsed / (1000 * 60));
             const minutesRemaining = 60 - minutesElapsed;
             
@@ -844,6 +871,17 @@
             if (targetStartDate && targetEndDate) {
                 const targetTotal = targetEndDate - targetStartDate;
                 const targetElapsed = now - targetStartDate;
+                
+                // 期間がゼロまたは負の場合はエラー表示
+                if (targetTotal <= 0) {
+                    document.getElementById('targetContainer').style.display = 'none';
+                    document.getElementById('targetStart').textContent = '⚠️ 無効な期間';
+                    document.getElementById('targetPercent').textContent = '--%';
+                    document.getElementById('targetProgress').textContent = '';
+                    document.getElementById('targetRemaining').textContent = '';
+                    return;
+                }
+                
                 const targetPercent = Math.min(100, Math.max(0, Math.floor((targetElapsed / targetTotal) * 100)));
                 const targetRemaining = targetEndDate - now;
                 
@@ -852,28 +890,40 @@
                 document.getElementById('targetBar').style.width = `${targetPercent}%`;
                 
                 // Format start and end dates
-                const startStr = `${targetStartDate.getMonth() + 1}/${targetStartDate.getDate()} ${targetStartDate.getHours()}:${targetStartDate.getMinutes().toString().padStart(2, '0')}`;
-                const endStr = `${targetEndDate.getMonth() + 1}/${targetEndDate.getDate()} ${targetEndDate.getHours()}:${targetEndDate.getMinutes().toString().padStart(2, '0')}`;
-                document.getElementById('targetStart').textContent = startStr + ' →';
+                const startStr = `${targetStartDate.getMonth() + 1}/${targetStartDate.getDate()} ${targetStartDate.getHours().toString().padStart(2, '0')}:${targetStartDate.getMinutes().toString().padStart(2, '0')}`;
+                document.getElementById('targetStart').textContent = `🎯 ${startStr} →`;
                 
                 // Calculate elapsed and remaining
                 if (targetPercent >= 100) {
+                    // 完了
                     document.getElementById('targetProgress').textContent = t.elapsed;
-                    document.getElementById('targetRemaining').textContent = '完了';
+                    document.getElementById('targetRemaining').textContent = t.completed;
+                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #4ECDC4, #A8E6CF)'; // Completed color
+                } else if (targetPercent <= 0 && targetElapsed < 0) {
+                     // 開始前
+                     const remainingTime = targetStartDate - now;
+                     document.getElementById('targetProgress').textContent = `${t.remaining} ${formatTimeRemaining(remainingTime)}`;
+                     document.getElementById('targetRemaining').textContent = t.elapsed;
+                     document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #F4A261, #FFD3B6)'; // Pre-start color
+                     document.getElementById('targetBar').style.width = '0%'; // 開始前は0%
                 } else {
+                    // 進行中
                     const elapsedDays = Math.floor(targetElapsed / (1000 * 60 * 60 * 24));
-                    document.getElementById('targetProgress').textContent = `${elapsedDays}${t.daysElapsed.replace('経過', '')} ${t.elapsed}`;
+                    document.getElementById('targetProgress').textContent = `${elapsedDays}${t.daysElapsed.replace('経過', '').trim()} ${t.elapsed}`;
                     document.getElementById('targetRemaining').textContent = `${t.remaining} ${formatTimeRemaining(targetRemaining)}`;
+                    document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #A8E6CF, #FFD3B6)'; // In-progress color
                 }
             } else {
                 document.getElementById('targetContainer').style.display = 'none';
                 document.getElementById('targetStart').textContent = t.targetNotSet;
+                document.getElementById('targetPercent').textContent = '--%';
                 document.getElementById('targetProgress').textContent = '';
                 document.getElementById('targetRemaining').textContent = '';
             }
             
             // 統計情報
-            document.getElementById('yearDay').textContent = `${daysInYear}/365`;
+            const daysInCurrentYear = new Date(year, 11, 31) - yearStart;
+            document.getElementById('yearDay').textContent = `${daysInYear}/${Math.ceil(daysInCurrentYear / (1000 * 60 * 60 * 24))}`; // 日数
             document.getElementById('weekNumber').textContent = getWeekNumber(now);
             document.getElementById('dayOfWeek').textContent = t.weekdays[weekday];
             document.getElementById('totalMinutes').textContent = hours * 60 + minutes;
@@ -882,30 +932,35 @@
         // イベントリスナー
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'ja' ? 'en' : 'ja';
+            saveSettings(); // 設定保存
             updateLanguage();
             updateTimeProgress();
         });
         
-        document.getElementById('weekStartDay').addEventListener('change', () => {
+        document.getElementById('weekStartDay').addEventListener('change', (e) => {
+            weekStartDay = parseInt(e.target.value);
+            saveSettings(); // 設定保存
             updateTimeProgress();
         });
         
+        // ⭐ ID修正済みの入力フィールドを使用
         document.getElementById('setTargetBtn').addEventListener('click', () => {
-            const startInput = document.getElementById('targetStartDate').value;
-            const endInput = document.getElementById('targetEndDate').value;
+            const startInput = document.getElementById('targetStartDateInput').value;
+            const endInput = document.getElementById('targetEndDateInput').value;
             
             if (startInput && endInput) {
                 targetStartDate = new Date(startInput);
                 targetEndDate = new Date(endInput);
+                
+                // LocalStorageに目標を保存する（オプション）
+                localStorage.setItem('targetStartDate', startInput);
+                localStorage.setItem('targetEndDate', endInput);
+                
                 updateTimeProgress();
             }
         });
         
-        // Set default values for target date inputs (today to tomorrow)
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
+        // 日時入力フィールドのフォーマット関数
         const formatDateForInput = (date) => {
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -915,15 +970,35 @@
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         };
         
-        document.getElementById('targetStartDate').value = formatDateForInput(now);
-        document.getElementById('targetEndDate').value = formatDateForInput(tomorrow);
-        
-        // 初期化
-        updateLanguage();
-        updateTimeProgress();
-        
-        // 1秒ごとに更新
-        setInterval(updateTimeProgress, 1000);
+        // 初期化処理
+        (function initialize() {
+            // 1. 設定のロード
+            loadSettings();
+            
+            // 2. カスタム目標のLocalStorageからの復元
+            const savedStart = localStorage.getItem('targetStartDate');
+            const savedEnd = localStorage.getItem('targetEndDate');
+            
+            // 3. デフォルト値または復元値をセット
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            document.getElementById('targetStartDateInput').value = savedStart || formatDateForInput(now);
+            document.getElementById('targetEndDateInput').value = savedEnd || formatDateForInput(tomorrow);
+            
+            if (savedStart && savedEnd) {
+                targetStartDate = new Date(savedStart);
+                targetEndDate = new Date(savedEnd);
+            }
+            
+            // 4. 言語と進捗の初回更新
+            updateLanguage();
+            updateTimeProgress();
+            
+            // 5. 1秒ごとに更新
+            setInterval(updateTimeProgress, 1000);
+        })();
     </script>
 </body>
 </html>
