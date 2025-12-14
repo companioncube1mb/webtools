@@ -17,21 +17,59 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400&display=swap');
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            /* ダークモード */
+            --bg-start: #1a1a2e;
+            --bg-end: #16213e;
+            --text-color: white;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --input-border: rgba(255, 255, 255, 0.2);
+            --select-bg: rgba(30, 30, 50, 0.9);
+            --progress-track: rgba(255, 255, 255, 0.1);
+            --milestone-color: rgba(255, 255, 255, 0.2);
+            --milestone-half-color: rgba(255, 255, 255, 0.3);
+            --time-display-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            --datetime-local-scheme: dark;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text-color);
             min-height: 100vh;
             padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- ライトモードのスタイル --- */
+        body.light-mode {
+            --bg-start: #f4f4f4;
+            --bg-end: #ffffff;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --card-border: #ddd;
+            --input-bg: #f8f8f8;
+            --input-border: #ccc;
+            --select-bg: #f8f8f8;
+            --progress-track: #e0e0e0;
+            --milestone-color: rgba(0, 0, 0, 0.1);
+            --milestone-half-color: rgba(0, 0, 0, 0.2);
+            --time-display-shadow: none;
+            --datetime-local-scheme: light;
+            
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+        }
+        
+        /* 共通スタイル */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         .container {
@@ -39,7 +77,6 @@
             width: 100%;
         }
 
-        /* 言語切り替えボタン */
         .header {
             display: flex;
             justify-content: space-between;
@@ -52,10 +89,10 @@
             font-size: clamp(1.5rem, 4vw, 2rem);
         }
         
-        .lang-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+        .btn-style {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
             padding: 8px 16px;
             border-radius: 20px;
             cursor: pointer;
@@ -63,19 +100,19 @@
             transition: all 0.3s;
         }
         
-        .lang-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+        .btn-style:hover {
+            background: var(--input-border);
         }
 
-        /* 現在時刻表示 */
         .current-time {
             text-align: center;
             margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            transition: background 0.3s, border-color 0.3s;
         }
 
         .time-display {
@@ -83,7 +120,8 @@
             font-weight: 200;
             margin-bottom: 10px;
             font-variant-numeric: tabular-nums;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            text-shadow: var(--time-display-shadow);
+            transition: text-shadow 0.3s;
         }
 
         .date-display {
@@ -92,20 +130,30 @@
             font-weight: 300;
         }
 
-        /* プログレスカード */
         .progress-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease;
+            border: 1px solid var(--card-border);
+            transition: transform 0.3s ease, background 0.3s, border-color 0.3s;
         }
 
         .progress-card:hover {
             transform: translateY(-2px);
         }
+        
+        /* カスタム目標カードのライトモード調整 */
+        .progress-card.target-card {
+             background: rgba(102, 126, 234, 0.1); 
+             border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        body.light-mode .progress-card.target-card {
+             background: rgba(102, 126, 234, 0.05); 
+             border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
 
         .progress-header {
             display: flex;
@@ -140,26 +188,24 @@
             opacity: 0.8;
         }
 
-        /* プログレスバー */
         .progress-bar-container {
             width: 100%;
             height: 40px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--progress-track);
             border-radius: 0;
             overflow: hidden;
             position: relative;
+            transition: background 0.3s;
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
             border-radius: 0;
             transition: width 1s ease;
             position: relative;
             overflow: hidden;
         }
 
-        /* 光沢エフェクト */
         .progress-bar::after {
             content: '';
             position: absolute;
@@ -169,8 +215,10 @@
             height: 50%;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), transparent);
         }
+        body.light-mode .progress-bar::after {
+             background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent);
+        }
 
-        /* アニメーション */
         .shine {
             position: absolute;
             top: 0;
@@ -186,46 +234,34 @@
             100% { left: 100%; }
         }
 
-        /* 各時間帯の色分け */
-        .progress-bar.year {
-            background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
+        /* 色分け */
+        .progress-bar.year { background: linear-gradient(90deg, #FF6B6B, #4ECDC4); }
+        .progress-bar.month { background: linear-gradient(90deg, #95E1D3, #3D5A80); }
+        .progress-bar.week { background: linear-gradient(90deg, #F4A261, #E76F51); }
+        .progress-bar.day { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .progress-bar.hour { background: linear-gradient(90deg, #56CCF2, #2F80ED); }
+        .progress-bar.target { background: linear-gradient(90deg, #A8E6CF, #FFD3B6); }
+        
+        .progress-bar.remaining-mode {
+            filter: brightness(0.9);
         }
 
-        .progress-bar.month {
-            background: linear-gradient(90deg, #95E1D3, #3D5A80);
-        }
-
-        .progress-bar.week {
-            background: linear-gradient(90deg, #F4A261, #E76F51);
-        }
-
-        .progress-bar.day {
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .progress-bar.hour {
-            background: linear-gradient(90deg, #56CCF2, #2F80ED);
-        }
-
-        /* マイルストーンマーカー */
-        .milestones {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+        /* マイルストーン */
+        .milestones { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .milestone { 
+            position: absolute; 
+            width: 1px; 
+            height: 100%; 
+            background: var(--milestone-color); 
             top: 0;
-            left: 0;
+            transition: background 0.3s;
         }
-
-        .milestone {
-            position: absolute;
-            width: 1px;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.2);
-            top: 0;
+        .milestone.half { 
+            width: 2px; 
+            background: var(--milestone-half-color); 
         }
-
         .milestone.quarter { left: 25%; }
-        .milestone.half { left: 50%; width: 2px; background: rgba(255, 255, 255, 0.3); }
+        .milestone.half { left: 50%; }
         .milestone.three-quarter { left: 75%; }
 
         /* 統計情報 */
@@ -237,78 +273,45 @@
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
             border-radius: 15px;
             padding: 15px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            transition: background 0.3s, border-color 0.3s;
         }
 
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 200;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        /* レスポンシブ */
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .progress-card {
-                padding: 15px;
-            }
-            
-            .progress-value {
-                font-size: 1.5rem;
-            }
-            
-            .progress-title {
-                font-size: 1rem;
-            }
-            
-            .progress-bar-container {
-                height: 35px;
-            }
-            
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 400px) {
-            .progress-details {
-                font-size: 0.8rem;
-            }
-            
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-        }
-        
         /* フォームの共通スタイル */
         .form-input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
             padding: 8px;
             border-radius: 10px;
             flex: 1;
             min-width: 200px;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
         }
         
-        /* datetime-localの矢印の色を白くする */
         input[type="datetime-local"] {
-            color-scheme: dark; 
+            color-scheme: var(--datetime-local-scheme); 
+        }
+        
+        /* Selectボックスのスタイル */
+        #weekStartDay {
+            background: var(--select-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 10px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+        
+        #weekStartDay option {
+             background: var(--select-bg); /* オプションの背景もテーマに合わせる */
         }
 
         .form-button {
@@ -320,32 +323,45 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+        body.light-mode .form-button {
+            background: linear-gradient(135deg, #4c68d7, #694ba2);
+        }
+        
+        /* ヘッダーボタンのグループ化 */
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .header-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1 id="title">📊 時間の経過</h1>
-            <button class="lang-btn" id="langBtn">🌐 English</button>
+            <div class="header-buttons">
+                <button class="btn-style" id="langBtn">🌐 English</button>
+                <button class="btn-style" id="themeBtn">🌙 Dark</button>
+            </div>
         </div>
         
         <div class="current-time" style="margin-bottom: 20px;">
             <div style="display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap;">
                 <div>
                     <label for="weekStartDay" style="font-size: 0.9rem; opacity: 0.8;" id="weekStartLabel">週の開始曜日:</label>
-                    <select id="weekStartDay" style="
-                        background: rgba(30, 30, 50, 0.9);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: white;
-                        padding: 5px 10px;
-                        border-radius: 10px;
-                        margin-left: 10px;
-                        cursor: pointer;
-                    ">
-                        <option value="1" style="background: #2a2a3e; color: white;">月曜日</option>
-                        <option value="0" style="background: #2a2a3e; color: white;">日曜日</option>
-                        <option value="6" style="background: #2a2a3e; color: white;">土曜日</option>
+                    <select id="weekStartDay">
+                        <option value="1">月曜日</option>
+                        <option value="0">日曜日</option>
+                        <option value="6">土曜日</option>
                     </select>
+                </div>
+                <div>
+                    <button class="btn-style" id="togglePercentMode">経過 % / 残り %</button>
                 </div>
             </div>
         </div>
@@ -480,7 +496,7 @@
             </div>
         </div>
         
-        <div class="progress-card" style="background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3);">
+        <div class="progress-card target-card">
             <div class="progress-header">
                 <div class="progress-title">
                     <span class="progress-icon">🎯</span>
@@ -502,7 +518,7 @@
             </div>
             
             <div class="progress-bar-container" id="targetContainer" style="display: none; margin-top: 15px;">
-                <div class="progress-bar target" id="targetBar" style="width: 0%; background: linear-gradient(90deg, #A8E6CF, #FFD3B6);">
+                <div class="progress-bar target" id="targetBar" style="width: 0%">
                     <div class="shine"></div>
                 </div>
                 <div class="milestones">
@@ -556,12 +572,17 @@
                 fromSaturday: '土曜から',
                 fromMidnight: '0:00から',
                 fromHourStart: ':00から',
+                // ⭐ 修正2: 日本語の残り時間表現を修正するため、単位と接頭辞を分ける
+                elapsed: '経過',
+                remaining: '残り',
+                dayUnit: '日',
+                hourUnit: '時間',
+                minuteUnit: '分',
+                // 既存のElapsedはそのまま使用
                 daysElapsed: '日経過',
                 hoursElapsed: '時間経過',
                 minutesElapsed: '分経過',
-                daysRemaining: '残り日',
-                hoursRemaining: '残り時間',
-                minutesRemaining: '残り分',
+                
                 dayOfYear: '今年の日数',
                 weekOfYear: '今年の週番号',
                 dayOfWeek: '曜日',
@@ -574,9 +595,10 @@
                 saturday: '土曜日',
                 setTarget: '設定',
                 targetNotSet: '目標を設定してください',
-                elapsed: '経過',
-                remaining: '残り',
-                completed: '完了'
+                completed: '完了',
+                invalidRange: '⚠️ 無効な期間',
+                toggleElapsed: '経過 %',
+                toggleRemaining: '残り %'
             },
             en: {
                 title: '📊 Time Progress',
@@ -596,9 +618,13 @@
                 daysElapsed: 'days elapsed',
                 hoursElapsed: 'hours elapsed',
                 minutesElapsed: 'min elapsed',
-                daysRemaining: 'days left',
-                hoursRemaining: 'hours left',
-                minutesRemaining: 'min left',
+                
+                elapsed: 'elapsed',
+                remaining: 'remaining',
+                dayUnit: 'days',
+                hourUnit: 'hours',
+                minuteUnit: 'min',
+
                 dayOfYear: 'Day of Year',
                 weekOfYear: 'Week Number',
                 dayOfWeek: 'Day of Week',
@@ -611,23 +637,53 @@
                 saturday: 'Saturday',
                 setTarget: 'Set',
                 targetNotSet: 'Set your target date',
-                elapsed: 'elapsed',
-                remaining: 'remaining',
-                completed: 'Completed'
+                completed: 'Completed',
+                invalidRange: '⚠️ Invalid Range',
+                toggleElapsed: 'Elapsed %',
+                toggleRemaining: 'Remaining %'
             }
         };
         
-        // 状態変数の初期化
+        // 状態変数
         let currentLang = 'ja';
-        let weekStartDay = 1; // 1 = Monday, 0 = Sunday, 6 = Saturday
+        let weekStartDay = 1; 
         let targetStartDate = null;
         let targetEndDate = null;
+        let isElapsedMode = true; 
+        let currentTheme = 'dark'; // 'dark' or 'light'
         
-        // URLパラメータとLocalStrageから設定を読み込む
+        // ヘルパー関数: 残り時間の表示を修正された日本語で出力
+        function getRemainingText(count, unitKey) {
+            const t = translations[currentLang];
+            const unit = t[unitKey];
+            
+            if (currentLang === 'ja') {
+                return `${t.remaining} ${count} ${unit}`; // 例: 残り 3 日
+            } else {
+                return `${count} ${unit} ${t.remaining}`; // 例: 3 days remaining
+            }
+        }
+        
+        // ⭐ 修正1: テーマを適用する関数
+        function setTheme(theme, save = true) {
+            currentTheme = theme;
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('themeBtn').textContent = '🌙 Dark';
+            } else {
+                document.body.classList.remove('light-mode');
+                document.getElementById('themeBtn').textContent = '☀️ Light';
+            }
+            // datetime-local のテーマを確実に適用
+            document.body.style.colorScheme = theme;
+            
+            if (save) saveSettings(false); 
+        }
+        
         function loadSettings() {
             const params = new URLSearchParams(window.location.search);
             
-            // 言語設定の読み込み (URL > LocalStorage > Default)
+            // 言語設定
             const urlLang = params.get('lang');
             const localLang = localStorage.getItem('lang');
             if (urlLang && translations[urlLang]) {
@@ -636,7 +692,7 @@
                 currentLang = localLang;
             }
             
-            // 週の開始曜日の読み込み (URL > LocalStorage > Default)
+            // 週の開始曜日
             const urlWeekStart = params.get('weekStart');
             const localWeekStart = localStorage.getItem('weekStart');
             if (urlWeekStart !== null && ['0', '1', '6'].includes(urlWeekStart)) {
@@ -644,16 +700,32 @@
             } else if (localWeekStart !== null && ['0', '1', '6'].includes(localWeekStart)) {
                 weekStartDay = parseInt(localWeekStart);
             }
-            
-            // Selectボックスの値を設定に合わせる
             document.getElementById('weekStartDay').value = weekStartDay.toString();
+            
+            // パーセント表示モード
+            const localPercentMode = localStorage.getItem('isElapsedMode');
+            if (localPercentMode !== null) {
+                isElapsedMode = localPercentMode === 'true';
+            }
+            
+            // ⭐ 修正1: テーマ設定のロード (Local Storage > prefers-color-scheme > Default)
+            const localTheme = localStorage.getItem('theme');
+            if (localTheme && ['dark', 'light'].includes(localTheme)) {
+                currentTheme = localTheme;
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                currentTheme = 'light';
+            } else {
+                currentTheme = 'dark';
+            }
+            setTheme(currentTheme, false);
         }
         
-        // LocalStorageに設定を保存し、URLを更新する
         function saveSettings(updateUrl = true) {
             // LocalStorage保存
             localStorage.setItem('lang', currentLang);
             localStorage.setItem('weekStart', weekStartDay.toString());
+            localStorage.setItem('isElapsedMode', isElapsedMode.toString());
+            localStorage.setItem('theme', currentTheme); // ⭐ 修正1: テーマを保存
             
             // URLパラメータ更新
             if (updateUrl) {
@@ -676,14 +748,16 @@
             document.getElementById('setTargetBtn').textContent = t.setTarget;
             document.getElementById('langBtn').textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
             
-            // Update week start day options
             const weekStartSelect = document.getElementById('weekStartDay');
             weekStartSelect.options[0].text = t.monday;
             weekStartSelect.options[1].text = t.sunday;
             weekStartSelect.options[2].text = t.saturday;
             
-            // Update HTML lang attribute for SEO/Accessibility
             document.documentElement.lang = currentLang;
+            
+            document.getElementById('togglePercentMode').textContent = isElapsedMode 
+                ? `${t.toggleElapsed} / ${t.toggleRemaining}` 
+                : `${t.toggleRemaining} / ${t.toggleElapsed}`;
         }
 
         // 年間の経過日数を取得
@@ -693,25 +767,13 @@
             return Math.floor(diff / (1000 * 60 * 60 * 24));
         }
         
-        // ⭐ 修正4: 週開始曜日に合わせたカスタム週番号を計算 (非ISO)
+        // カスタム週番号を計算 (非ISO)
         function getCustomWeekNumber(date, weekStart) {
             const startOfYear = new Date(date.getFullYear(), 0, 1);
             const dayOfYear = getDayOfYear(date);
-
-            // Jan 1st の曜日を取得 (0=Sun, 1=Mon, ...)
             const jan1DayOfWeek = startOfYear.getDay();
-
-            // Jan 1st が属する週の、週の開始日(weekStart)から数えたオフセット
-            // 例: weekStart=1(月), Jan1=日(0) の場合: (0 - 1 + 7) % 7 = 6日
-            // Jan 1st はその週の7日目(インデックス6)なので、週番号を計算する際にこの日数を加算して Week 1 に収まるようにする
             const offset = (jan1DayOfWeek - weekStart + 7) % 7;
-            
-            // 経過日数にオフセットを加え、7で割って切り上げると週番号になる
             return Math.ceil((dayOfYear + offset) / 7);
-        }
-        
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
         }
         
         function formatTimeRemaining(milliseconds) {
@@ -721,36 +783,33 @@
             const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
             const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
             
-            // daysRemaining/hoursRemaining/minutesRemainingの先頭の「残り」を削除
-            const dayLabel = t.daysRemaining.replace(t.remaining, '').trim();
-            const hourLabel = t.hoursRemaining.replace(t.remaining, '').trim();
-            const minuteLabel = t.minutesRemaining.replace(t.remaining, '').trim();
-            
             if (totalDays > 0) {
-                return `${totalDays}${dayLabel} ${hours}${hourLabel}`;
+                // 例: 3日 10時間
+                return `${totalDays}${t.dayUnit} ${hours}${t.hourUnit}`;
             } else if (hours > 0) {
-                return `${hours}${hourLabel} ${minutes}${minuteLabel}`;
+                // 例: 10時間 30分
+                return `${hours}${t.hourUnit} ${minutes}${t.minuteUnit}`;
             } else {
-                return `${minutes}${minuteLabel}`;
+                // 例: 30分
+                return `${minutes}${t.minuteUnit}`;
             }
         }
         
-        function updateTimeProgress() {
+        // 毎秒更新する処理
+        function updateClock() {
             const now = new Date();
             const t = translations[currentLang];
-            
-            // 現在時刻の表示
-            const hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('currentTime').textContent = timeStr;
-            
-            // 日付の表示
             const year = now.getFullYear();
             const month = now.getMonth();
             const date = now.getDate();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
             const weekday = now.getDay();
+            
+            // 1. 現在時刻の表示
+            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('currentTime').textContent = timeStr;
             
             if (currentLang === 'ja') {
                 document.getElementById('currentDate').textContent = 
@@ -759,54 +818,99 @@
                 document.getElementById('currentDate').textContent = 
                     `${t.months[month]} ${date}, ${year} (${t.weekdays[weekday]})`;
             }
+
+            // 2. 時間の進捗 (Hour Progress)
+            const hourStart = new Date(year, month, date, hours, 0, 0);
+            const hourEnd = new Date(year, month, date, hours + 1, 0, 0);
+            const hourTotal = hourEnd - hourStart;
+            const hourElapsed = now - hourStart;
+            const hourPercent = Math.min(100, Math.max(0, (hourElapsed / hourTotal) * 100));
+            const minutesElapsed = Math.floor(hourElapsed / (1000 * 60));
+            const minutesRemaining = 60 - minutesElapsed;
+
+            const displayPercent = isElapsedMode ? hourPercent : 100 - hourPercent;
+            const percentStr = `${Math.floor(displayPercent)}%`;
             
-            // 年の進捗
+            document.getElementById('hourTitle').textContent = t.hour;
+            document.getElementById('hourPercent').textContent = percentStr;
+            document.getElementById('hourBar').style.width = `${isElapsedMode ? hourPercent : 100 - hourPercent}%`;
+            document.getElementById('hourBar').classList.toggle('remaining-mode', !isElapsedMode);
+
+            document.getElementById('hourStart').textContent = `${hours}${t.fromHourStart}`;
+            document.getElementById('hourProgress').textContent = `${minutesElapsed} ${t.minutesElapsed}`;
+            
+            // ⭐ 修正2: 日本語表現の修正
+            document.getElementById('hourRemaining').textContent = getRemainingText(minutesRemaining, 'minuteUnit');
+            
+            // 3. 統計情報 (Minutes Today)
+            document.getElementById('totalMinutes').textContent = hours * 60 + minutes + Math.floor(seconds / 60);
+        }
+
+        // 毎分更新する処理
+        function updateProgress() {
+            const now = new Date();
+            const t = translations[currentLang];
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const date = now.getDate();
+            const weekday = now.getDay();
+
+            // ヘルパー関数: 進捗を更新しDOMに反映する
+            const updateCard = (id, elapsed, total, titleKey, elapsedDetail, remainingCount, unitKey) => {
+                const percent = Math.min(100, Math.max(0, Math.floor((elapsed / total) * 100)));
+                
+                const displayPercent = isElapsedMode ? percent : 100 - percent;
+                const percentStr = `${displayPercent}%`;
+                const barWidth = isElapsedMode ? percent : 100 - percent;
+                
+                document.getElementById(`${id}Title`).textContent = t[titleKey];
+                document.getElementById(`${id}Percent`).textContent = percentStr;
+                document.getElementById(`${id}Bar`).style.width = `${barWidth}%`;
+                document.getElementById(`${id}Bar`).classList.toggle('remaining-mode', !isElapsedMode);
+                
+                document.getElementById(`${id}Progress`).textContent = elapsedDetail;
+                
+                // ⭐ 修正2: 日本語表現の修正
+                document.getElementById(`${id}Remaining`).textContent = getRemainingText(remainingCount, unitKey);
+            };
+
+            // --- 年の進捗 ---
             const yearStart = new Date(year, 0, 1);
             const yearEnd = new Date(year + 1, 0, 1);
             const yearTotal = yearEnd - yearStart;
             const yearElapsed = now - yearStart;
-            const yearPercent = Math.min(100, Math.max(0, Math.floor((yearElapsed / yearTotal) * 100)));
             const daysInYear = getDayOfYear(now);
-            const daysRemainingInYear = (yearEnd - now) / (1000 * 60 * 60 * 24);
+            const daysRemainingInYear = Math.ceil((yearEnd - now) / (1000 * 60 * 60 * 24)); 
             
-            const yearTitleText = currentLang === 'ja' ? `${year}年の進捗` : `${year} Progress`;
-            document.getElementById('yearTitle').textContent = yearTitleText;
-            document.getElementById('yearPercent').textContent = `${yearPercent}%`;
-            document.getElementById('yearBar').style.width = `${yearPercent}%`;
+            updateCard('year', yearElapsed, yearTotal, 'year',
+                `${daysInYear} ${t.daysElapsed}`,
+                daysRemainingInYear, 'dayUnit');
             document.getElementById('yearStart').textContent = t.fromJan;
-            document.getElementById('yearProgress').textContent = `${daysInYear} ${t.daysElapsed}`;
-            document.getElementById('yearRemaining').textContent = `${Math.ceil(daysRemainingInYear)} ${t.daysRemaining}`;
-            
-            // 月の進捗
+
+            // --- 月の進捗 ---
             const monthStart = new Date(year, month, 1);
             const monthEnd = new Date(year, month + 1, 1);
             const monthTotal = monthEnd - monthStart;
             const monthElapsed = now - monthStart;
-            const monthPercent = Math.min(100, Math.max(0, Math.floor((monthElapsed / monthTotal) * 100)));
-            const daysInCurrentMonth = getDaysInMonth(year, month);
-            const daysRemainingInMonth = daysInCurrentMonth - date;
+            const daysRemainingInMonth = Math.max(
+                0,
+                Math.ceil((monthEnd - now) / (1000 * 60 * 60 * 24))
+            );
             
-            const monthTitleText = currentLang === 'ja' ? `${month + 1}月の進捗` : `${t.months[month]} Progress`;
-            document.getElementById('monthTitle').textContent = monthTitleText;
-            document.getElementById('monthPercent').textContent = `${monthPercent}%`;
-            document.getElementById('monthBar').style.width = `${monthPercent}%`;
+            updateCard('month', monthElapsed, monthTotal, 'month',
+                `${date} ${t.daysElapsed}`,
+                daysRemainingInMonth, 'dayUnit');
             document.getElementById('monthStart').textContent = currentLang === 'ja' ? 
-                `${month + 1}${t.fromMonthStart}` : `${t.fromMonthStart}`;
-            document.getElementById('monthProgress').textContent = `${date} ${t.daysElapsed}`;
-            document.getElementById('monthRemaining').textContent = `${daysRemainingInMonth} ${t.daysRemaining}`;
-            
-            // 週の進捗（カスタム開始曜日）
+                `${month + 1}${t.fromMonthStart}` : `${t.months[month]} ${t.fromMonthStart}`;
+
+            // --- 週の進捗（カスタム開始曜日）---
             weekStartDay = parseInt(document.getElementById('weekStartDay').value);
             const currentDayOfWeek = weekday;
             let daysFromWeekStart;
             
-            if (weekStartDay === 0) { // Sunday start (0)
-                daysFromWeekStart = currentDayOfWeek;
-            } else if (weekStartDay === 1) { // Monday start (1)
-                daysFromWeekStart = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
-            } else if (weekStartDay === 6) { // Saturday start (6)
-                daysFromWeekStart = (currentDayOfWeek + 1) % 7;
-            }
+            if (weekStartDay === 0) { daysFromWeekStart = currentDayOfWeek; } 
+            else if (weekStartDay === 1) { daysFromWeekStart = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; } 
+            else if (weekStartDay === 6) { daysFromWeekStart = (currentDayOfWeek + 1) % 7; }
             
             const weekStart = new Date(now);
             weekStart.setDate(date - daysFromWeekStart);
@@ -815,72 +919,43 @@
             weekEnd.setDate(weekStart.getDate() + 7);
             const weekTotal = weekEnd - weekStart;
             const weekElapsed = now - weekStart;
-            const weekPercent = Math.min(100, Math.max(0, Math.floor((weekElapsed / weekTotal) * 100)));
             const daysElapsedInWeek = Math.floor(weekElapsed / (1000 * 60 * 60 * 24));
             
-            // ⭐ 修正3: 残り日数を正確に計算
             const daysRemainingInWeek = Math.max(
                 0,
                 Math.ceil((weekEnd - now) / (1000 * 60 * 60 * 24))
             );
             
-            document.getElementById('weekPercent').textContent = `${weekPercent}%`;
-            document.getElementById('weekBar').style.width = `${weekPercent}%`;
+            updateCard('week', weekElapsed, weekTotal, 'week',
+                `${daysElapsedInWeek} ${t.daysElapsed}`,
+                daysRemainingInWeek, 'dayUnit');
             
-            if (weekStartDay === 0) {
-                document.getElementById('weekStart').textContent = t.fromSunday;
-            } else if (weekStartDay === 1) {
-                document.getElementById('weekStart').textContent = t.fromMonday;
-            } else if (weekStartDay === 6) {
-                document.getElementById('weekStart').textContent = t.fromSaturday;
-            }
+            if (weekStartDay === 0) { document.getElementById('weekStart').textContent = t.fromSunday; } 
+            else if (weekStartDay === 1) { document.getElementById('weekStart').textContent = t.fromMonday; } 
+            else if (weekStartDay === 6) { document.getElementById('weekStart').textContent = t.fromSaturday; }
             
-            document.getElementById('weekProgress').textContent = `${daysElapsedInWeek} ${t.daysElapsed}`;
-            document.getElementById('weekRemaining').textContent = `${daysRemainingInWeek} ${t.daysRemaining}`;
-            document.getElementById('weekTitle').textContent = t.week;
-            
-            // 日の進捗
+            // --- 日の進捗 ---
             const dayStart = new Date(year, month, date, 0, 0, 0);
             const dayEnd = new Date(year, month, date + 1, 0, 0, 0);
             const dayTotal = dayEnd - dayStart;
             const dayElapsed = now - dayStart;
-            const dayPercent = Math.min(100, Math.max(0, Math.floor((dayElapsed / dayTotal) * 100)));
             const hoursElapsed = Math.floor(dayElapsed / (1000 * 60 * 60));
-            const hoursRemaining = 24 - hoursElapsed;
+            const hoursRemaining = Math.ceil((dayEnd - now) / (1000 * 60 * 60));
             
-            const dayTitleText = currentLang === 'ja' ? `${date}日の進捗` : `${t.months[month]} ${date} Progress`;
-            document.getElementById('dayTitle').textContent = dayTitleText;
-            document.getElementById('dayPercent').textContent = `${dayPercent}%`;
-            document.getElementById('dayBar').style.width = `${dayPercent}%`;
+            updateCard('day', dayElapsed, dayTotal, 'day',
+                `${hoursElapsed} ${t.hoursElapsed}`,
+                hoursRemaining, 'hourUnit');
+            document.getElementById('dayTitle').textContent = t.day;
             document.getElementById('dayStart').textContent = t.fromMidnight;
-            document.getElementById('dayProgress').textContent = `${hoursElapsed} ${t.hoursElapsed}`;
-            document.getElementById('dayRemaining').textContent = `${hoursRemaining} ${t.hoursRemaining}`;
             
-            // 時間の進捗
-            const hourStart = new Date(year, month, date, hours, 0, 0);
-            const hourEnd = new Date(year, month, date, hours + 1, 0, 0);
-            const hourTotal = hourEnd - hourStart;
-            const hourElapsed = now - hourStart;
-            const hourPercent = Math.min(100, Math.max(0, Math.floor((hourElapsed / hourTotal) * 100)));
-            const minutesElapsed = Math.floor(hourElapsed / (1000 * 60));
-            const minutesRemaining = 60 - minutesElapsed;
-            
-            const hourTitleText = currentLang === 'ja' ? `${hours}時の進捗` : `${hours}:00 Progress`;
-            document.getElementById('hourTitle').textContent = hourTitleText;
-            document.getElementById('hourPercent').textContent = `${hourPercent}%`;
-            document.getElementById('hourBar').style.width = `${hourPercent}%`;
-            document.getElementById('hourStart').textContent = `${hours}${t.fromHourStart}`;
-            document.getElementById('hourProgress').textContent = `${minutesElapsed} ${t.minutesElapsed}`;
-            document.getElementById('hourRemaining').textContent = `${minutesRemaining} ${t.minutesRemaining}`;
-            
-            // カスタム目標日時の進捗
+            // --- カスタム目標日時の進捗 ---
             if (targetStartDate && targetEndDate) {
                 const targetTotal = targetEndDate - targetStartDate;
                 const targetElapsed = now - targetStartDate;
                 
                 if (targetTotal <= 0) {
                     document.getElementById('targetContainer').style.display = 'none';
-                    document.getElementById('targetStart').textContent = '⚠️ 無効な期間';
+                    document.getElementById('targetStart').textContent = t.invalidRange;
                     document.getElementById('targetPercent').textContent = '--%';
                     document.getElementById('targetProgress').textContent = '';
                     document.getElementById('targetRemaining').textContent = '';
@@ -891,9 +966,13 @@
                 const targetRemaining = targetEndDate - now;
                 
                 document.getElementById('targetContainer').style.display = 'block';
-                document.getElementById('targetPercent').textContent = `${targetPercent}%`;
-                document.getElementById('targetBar').style.width = `${targetPercent}%`;
                 
+                const displayPercent = isElapsedMode ? targetPercent : 100 - targetPercent;
+                const barWidth = isElapsedMode ? targetPercent : 100 - targetPercent;
+                document.getElementById('targetPercent').textContent = `${displayPercent}%`;
+                document.getElementById('targetBar').style.width = `${barWidth}%`;
+                document.getElementById('targetBar').classList.toggle('remaining-mode', !isElapsedMode);
+
                 const startStr = `${targetStartDate.getMonth() + 1}/${targetStartDate.getDate()} ${targetStartDate.getHours().toString().padStart(2, '0')}:${targetStartDate.getMinutes().toString().padStart(2, '0')}`;
                 document.getElementById('targetStart').textContent = `🎯 ${startStr} →`;
                 
@@ -909,7 +988,7 @@
                      document.getElementById('targetBar').style.width = '0%';
                 } else {
                     const elapsedDays = Math.floor(targetElapsed / (1000 * 60 * 60 * 24));
-                    document.getElementById('targetProgress').textContent = `${elapsedDays}${t.daysElapsed.replace('経過', '').trim()} ${t.elapsed}`;
+                    document.getElementById('targetProgress').textContent = `${elapsedDays}${t.dayUnit} ${t.elapsed}`;
                     document.getElementById('targetRemaining').textContent = `${t.remaining} ${formatTimeRemaining(targetRemaining)}`;
                     document.getElementById('targetBar').style.background = 'linear-gradient(90deg, #A8E6CF, #FFD3B6)';
                 }
@@ -921,29 +1000,41 @@
                 document.getElementById('targetRemaining').textContent = '';
             }
             
-            // 統計情報
+            // --- 統計情報 ---
             const daysInCurrentYear = new Date(year, 11, 31) - yearStart;
             document.getElementById('yearDay').textContent = `${daysInYear}/${Math.ceil(daysInCurrentYear / (1000 * 60 * 60 * 24))}`;
-            
-            // ⭐ 修正4: カスタム週番号を使用
             document.getElementById('weekNumber').textContent = getCustomWeekNumber(now, weekStartDay);
-            
             document.getElementById('dayOfWeek').textContent = t.weekdays[weekday];
-            document.getElementById('totalMinutes').textContent = hours * 60 + minutes;
         }
         
         // イベントリスナー
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'ja' ? 'en' : 'ja';
-            saveSettings(); // 設定保存
+            saveSettings(); 
             updateLanguage();
-            updateTimeProgress();
+            updateProgress(); 
+        });
+        
+        // ⭐ 修正1: テーマボタンのイベントリスナー
+        document.getElementById('themeBtn').addEventListener('click', () => {
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateClock();
+            updateProgress();
         });
         
         document.getElementById('weekStartDay').addEventListener('change', (e) => {
             weekStartDay = parseInt(e.target.value);
-            saveSettings(); // 設定保存
-            updateTimeProgress();
+            saveSettings();
+            updateProgress();
+        });
+
+        document.getElementById('togglePercentMode').addEventListener('click', () => {
+            isElapsedMode = !isElapsedMode;
+            saveSettings(false); 
+            updateLanguage();
+            updateClock(); 
+            updateProgress();
         });
         
         document.getElementById('setTargetBtn').addEventListener('click', () => {
@@ -954,11 +1045,10 @@
                 targetStartDate = new Date(startInput);
                 targetEndDate = new Date(endInput);
                 
-                // LocalStorageに目標を保存
                 localStorage.setItem('targetStartDate', startInput);
                 localStorage.setItem('targetEndDate', endInput);
                 
-                updateTimeProgress();
+                updateProgress();
             }
         });
         
@@ -974,7 +1064,7 @@
         
         // 初期化処理
         (function initialize() {
-            // 1. 設定のロード (URLパラメータ & LocalStorage)
+            // 1. 設定のロード (テーマを含む)
             loadSettings();
             
             // 2. カスタム目標のLocalStorageからの復元
@@ -996,10 +1086,12 @@
             
             // 4. 言語と進捗の初回更新
             updateLanguage();
-            updateTimeProgress();
+            updateClock(); 
+            updateProgress(); 
             
-            // 5. 1秒ごとに更新
-            setInterval(updateTimeProgress, 1000);
+            // 5. インターバル設定
+            setInterval(updateClock, 1000); 
+            setInterval(updateProgress, 60000); 
         })();
     </script>
 </body>
